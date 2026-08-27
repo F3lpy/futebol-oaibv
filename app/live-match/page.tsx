@@ -22,6 +22,7 @@ function LiveMatchPageContent() {
   const [queue, setQueue] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showResult, setShowResult] = useState(false)
+  const [goalAnimation, setGoalAnimation] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     console.log('[LIVE-MATCH] loadData iniciado')
@@ -157,6 +158,11 @@ function LiveMatchPageContent() {
       const updated = await addGoal(currentMatch.id, teamId)
       setCurrentMatch(updated)
 
+      // Mostrar animação de GOL
+      const teamName = updated.team_a_id === teamId ? updated.team_a?.name : updated.team_b?.name
+      setGoalAnimation(teamName || 'GOL!')
+      setTimeout(() => setGoalAnimation(null), 1500)
+
       // Verificar se terminou por 2 gols
       if (updated.team_a_score >= GAME_CONFIG.GOAL_LIMIT || updated.team_b_score >= GAME_CONFIG.GOAL_LIMIT) {
         await finishMatch(currentMatch.id, 'goal_limit')
@@ -256,6 +262,16 @@ function LiveMatchPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white overflow-y-auto pb-20 lg:pb-8">
+      {/* Animação de GOL */}
+      {goalAnimation && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="animate-bounce text-8xl">⚽</div>
+          <div className="absolute text-6xl font-black text-green-400 animate-ping">
+            🎉 GOL! 🎉
+          </div>
+        </div>
+      )}
+
       <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
