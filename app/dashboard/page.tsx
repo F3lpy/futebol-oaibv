@@ -31,13 +31,12 @@ export default function DashboardPage() {
 
   async function loadStats() {
     try {
-      const today = new Date().toISOString().split('T')[0]
-
-      // Buscar evento de hoje
+      // Buscar próximo evento (ou mais recente)
       const { data: eventos } = await supabase
         .from('football_events')
         .select('*')
-        .eq('event_date', today)
+        .order('event_date', { ascending: false })
+        .limit(1)
         .single()
 
       if (eventos) {
