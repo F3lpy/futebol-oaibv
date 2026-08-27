@@ -23,19 +23,6 @@ function LiveMatchPageContent() {
   const [loading, setLoading] = useState(true)
   const [showResult, setShowResult] = useState(false)
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, authLoading, router])
-
-  useEffect(() => {
-    console.log('[LIVE-MATCH] useEffect acionado. user:', !!user, 'eventIdParam:', eventIdParam)
-    if (user && eventIdParam) {
-      loadData()
-    }
-  }, [user, eventIdParam, loadData])
-
   const loadData = useCallback(async () => {
     console.log('[LIVE-MATCH] loadData iniciado')
     setLoading(true)
@@ -114,6 +101,19 @@ function LiveMatchPageContent() {
     setLoading(false)
     console.log('[LIVE-MATCH] ✅ Loading desligado')
   }, [eventIdParam])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
+    console.log('[LIVE-MATCH] useEffect acionado. user:', !!user, 'eventIdParam:', eventIdParam)
+    if (user && eventIdParam) {
+      loadData()
+    }
+  }, [user, eventIdParam, loadData])
 
   async function handleStartMatch() {
     if (!currentMatch) return
