@@ -195,7 +195,7 @@ function LiveMatchPageContent() {
     )
   }
 
-  if (!event || !currentMatch || !queue) {
+  if (!event || !currentMatch || !queue || !currentMatch.team_a || !currentMatch.team_b) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
