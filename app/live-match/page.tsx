@@ -39,71 +39,68 @@ function LiveMatchPageContent() {
     setLoading(true)
     try {
       const eventId = parseInt(eventIdParam || '0')
+      console.log('[LIVE-MATCH] Evento ID:', eventId)
       if (!eventId) throw new Error('ID do evento não fornecido')
 
       // Obter evento
-      let eventData
-      try {
-        eventData = await getEvent(eventId)
-        setEvent(eventData)
-      } catch (err) {
-        console.error('Erro ao obter evento:', err)
-        throw new Error('Evento não encontrado')
-      }
+      console.log('[LIVE-MATCH] Obtendo evento...')
+      let eventData = await getEvent(eventId)
+      console.log('[LIVE-MATCH] Evento obtido:', eventData)
+      setEvent(eventData)
 
       // Obter partida atual ou criar nova
+      console.log('[LIVE-MATCH] Buscando partida existente...')
       let match = await getCurrentMatch(eventId)
+      console.log('[LIVE-MATCH] Partida encontrada:', match)
 
       if (!match) {
-        try {
-          // Inicializar fila se necessário
-          const teams = await getEventTeams(eventId)
-          if (teams.length === 0) {
-            throw new Error('Nenhum time criado para este evento')
-          }
+        console.log('[LIVE-MATCH] Criando primeira partida...')
+        // Inicializar fila se necessário
+        const teams = await getEventTeams(eventId)
+        console.log('[LIVE-MATCH] Times:', teams.length)
 
-          await initializeQueue(eventId, teams)
+        await initializeQueue(eventId, teams)
+        console.log('[LIVE-MATCH] Fila inicializada')
 
-          // Criar primeira partida
-          const queueData = await getQueueSummary(eventId)
-          if (queueData.playing.length >= 2) {
-            match = await createMatch(
-              eventId,
-              queueData.playing[0].id,
-              queueData.playing[1].id,
-              1,
-              eventData.match_duration_minutes || 7
-            )
-          }
-        } catch (err) {
-          console.error('Erro ao criar primeira partida:', err)
+        // Criar primeira partida
+        const queueData = await getQueueSummary(eventId)
+        console.log('[LIVE-MATCH] Fila resumida:', queueData)
+
+        if (queueData.playing && queueData.playing.length >= 2) {
+          match = await createMatch(
+            eventId,
+            queueData.playing[0].id,
+            queueData.playing[1].id,
+            1,
+            eventData.match_duration_minutes || 7
+          )
+          console.log('[LIVE-MATCH] Partida criada:', match)
         }
       }
 
       // Buscar times da partida
       if (match) {
-        try {
-          const allTeams = await getEventTeams(eventId)
-          const teamA = allTeams.find(t => t.id === match.team_a_id)
-          const teamB = allTeams.find(t => t.id === match.team_b_id)
-          match.team_a = teamA
-          match.team_b = teamB
-        } catch (err) {
-          console.error('Erro ao buscar times:', err)
-        }
+        console.log('[LIVE-MATCH] Buscando times da partida...')
+        const allTeams = await getEventTeams(eventId)
+        const teamA = allTeams.find(t => t.id === match.team_a_id)
+        const teamB = allTeams.find(t => t.id === match.team_b_id)
+        match.team_a = teamA
+        match.team_b = teamB
+        console.log('[LIVE-MATCH] Times da partida:', teamA?.name, 'vs', teamB?.name)
       }
 
+      console.log('[LIVE-MATCH] Definindo match atual...')
       setCurrentMatch(match)
 
       // Obter fila
-      try {
-        const queueData = await getQueueSummary(eventId)
-        setQueue(queueData)
-      } catch (err) {
-        console.error('Erro ao obter fila:', err)
-      }
+      console.log('[LIVE-MATCH] Obtendo fila...')
+      const queueData = await getQueueSummary(eventId)
+      console.log('[LIVE-MATCH] Fila obtida:', queueData)
+      setQueue(queueData)
+
+      console.log('[LIVE-MATCH] ✅ Tudo carregado com sucesso!')
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      console.error('[LIVE-MATCH] ❌ Erro:', error)
     } finally {
       setLoading(false)
     }
