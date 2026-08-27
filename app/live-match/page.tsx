@@ -37,12 +37,18 @@ function LiveMatchPageContent() {
   }, [user, eventIdParam, loadData])
 
   const loadData = useCallback(async () => {
+    console.log('[LIVE-MATCH] loadData iniciado')
     setLoading(true)
-    try {
-      const eventId = parseInt(eventIdParam || '0')
-      console.log('[LIVE-MATCH] Evento ID:', eventId)
-      if (!eventId) throw new Error('ID do evento não fornecido')
 
+    const eventId = parseInt(eventIdParam || '0')
+    console.log('[LIVE-MATCH] Evento ID:', eventId)
+    if (!eventId) {
+      console.log('[LIVE-MATCH] ID inválido')
+      setLoading(false)
+      return
+    }
+
+    try {
       // Obter evento
       console.log('[LIVE-MATCH] Obtendo evento...')
       let eventData = await getEvent(eventId)
@@ -102,10 +108,11 @@ function LiveMatchPageContent() {
       console.log('[LIVE-MATCH] ✅ Tudo carregado com sucesso!')
     } catch (error) {
       console.error('[LIVE-MATCH] ❌ Erro:', error)
-    } finally {
-      console.log('[LIVE-MATCH] setLoading(false) chamado')
-      setLoading(false)
     }
+
+    console.log('[LIVE-MATCH] 🏁 Desligando loading...')
+    setLoading(false)
+    console.log('[LIVE-MATCH] ✅ Loading desligado')
   }, [eventIdParam])
 
   async function handleStartMatch() {
