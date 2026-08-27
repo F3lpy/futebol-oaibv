@@ -156,10 +156,18 @@ function LiveMatchPageContent() {
 
     try {
       const updated = await addGoal(currentMatch.id, teamId)
-      setCurrentMatch(updated)
+
+      // Copiar dados dos times para o updated match
+      const updatedWithTeams = {
+        ...updated,
+        team_a: currentMatch.team_a,
+        team_b: currentMatch.team_b
+      } as MatchWithTeams
+
+      setCurrentMatch(updatedWithTeams)
 
       // Mostrar animação de GOL
-      const teamName = updated.team_a_id === teamId ? updated.team_a?.name : updated.team_b?.name
+      const teamName = updated.team_a_id === teamId ? currentMatch.team_a?.name : currentMatch.team_b?.name
       setGoalAnimation(teamName || 'GOL!')
       setTimeout(() => setGoalAnimation(null), 1500)
 
