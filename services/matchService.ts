@@ -14,15 +14,23 @@ export async function getEventMatches(eventId: number) {
 }
 
 export async function getCurrentMatch(eventId: number) {
-  const { data, error } = await supabase
-    .from('matches')
-    .select('*')
-    .eq('event_id', eventId)
-    .eq('status', 'live')
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('id', { ascending: false })
+      .limit(10)
 
-  if (error && error.code !== 'PGRST116') throw error
-  return data as any
+    if (error) throw error
+
+    // Filtrar em memória para encontrar a partida ao vivo
+    const liveMatch = data?.find(m => m.status === 'live')
+    return liveMatch || null
+  } catch (err) {
+    console.error('Erro ao buscar partida atual:', err)
+    return null
+  }
 }
 
 export async function createMatch(
