@@ -25,6 +25,8 @@ export default function DashboardPage() {
     setCreating(true)
 
     try {
+      console.log('1. Iniciando criação do evento...')
+
       // 1. Criar novo evento
       const event = await createEvent({
         event_date: new Date().toISOString().split('T')[0],
@@ -33,19 +35,25 @@ export default function DashboardPage() {
         match_duration_minutes: 7,
         status: 'active'
       })
+      console.log('2. Evento criado:', event)
 
       // 2. Pegar todos os jogadores
+      console.log('3. Buscando jogadores...')
       const players = await getPlayers()
+      console.log('4. Jogadores encontrados:', players.length)
 
       // 3. Criar times automaticamente (4-5 times)
       const teamsCount = Math.ceil(players.length / 5)
+      console.log('5. Criando', teamsCount, 'times...')
       await autoDistributeTeams(event.id, players, teamsCount)
+      console.log('6. Times criados com sucesso')
 
       // 4. Ir direto para o jogo
+      console.log('7. Redirecionando para live-match...')
       router.push(`/live-match?event=${event.id}`)
     } catch (error) {
-      console.error('Erro ao iniciar jogo:', error)
-      alert('Erro ao iniciar jogo. Tente novamente!')
+      console.error('❌ Erro ao iniciar jogo:', error)
+      alert(`Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
       setCreating(false)
     }
   }
