@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
 import { supabase } from '@/lib/supabase'
-import { createEvent } from '@/services/eventService'
-import { autoDistributeTeams } from '@/services/teamService'
-import { getPlayers } from '@/services/playerService'
+import { FootballEvent } from '@/types'
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [creating, setCreating] = useState(false)
+  const [stats, setStats] = useState({
+    confirmados: 0,
+    times: 0,
+    partidas: 0,
+    evento: null as FootballEvent | null
+  })
 
   useEffect(() => {
     if (!loading && !user) {
@@ -20,41 +23,52 @@ export default function DashboardPage() {
     }
   }, [user, loading, router])
 
-  async function handleStartGame() {
-    if (creating) return
-    setCreating(true)
+  useEffect(() => {
+    if (user) {
+      loadStats()
+    }
+  }, [user])
 
+  async function loadStats() {
     try {
-      console.log('1. Iniciando criação do evento...')
+      // Buscar próximo evento (ou mais recente)
+      const { data: eventos } = await supabase
+        .from('football_events')
+        .select('*')
+        .order('event_date', { ascending: false })
+        .limit(1)
+        .single()
 
-      // 1. Criar novo evento
-      const event = await createEvent({
-        event_date: new Date().toISOString().split('T')[0],
-        start_time: '18:00',
-        expected_end_time: '22:00',
-        match_duration_minutes: 7,
-        status: 'active'
-      })
-      console.log('2. Evento criado:', event)
+      if (eventos) {
+        // Contar confirmados
+        const { count: confirmados } = await supabase
+          .from('attendance')
+          .select('*', { count: 'exact' })
+          .eq('event_id', eventos.id)
+          .eq('confirmed', true)
 
-      // 2. Pegar todos os jogadores
-      console.log('3. Buscando jogadores...')
-      const players = await getPlayers()
-      console.log('4. Jogadores encontrados:', players.length)
+        // Contar times
+        const { count: times } = await supabase
+          .from('teams')
+          .select('*', { count: 'exact' })
+          .eq('event_id', eventos.id)
 
-      // 3. Criar times automaticamente (4-5 times)
-      const teamsCount = Math.ceil(players.length / 5)
-      console.log('5. Criando', teamsCount, 'times...')
-      await autoDistributeTeams(event.id, players, teamsCount)
-      console.log('6. Times criados com sucesso')
+        // Contar partidas
+        const { count: partidas } = await supabase
+          .from('matches')
+          .select('*', { count: 'exact' })
+          .eq('event_id', eventos.id)
+          .eq('status', 'finished')
 
-      // 4. Ir direto para o jogo
-      console.log('7. Redirecionando para live-match...')
-      router.push(`/live-match?event=${event.id}`)
+        setStats({
+          confirmados: confirmados || 0,
+          times: times || 0,
+          partidas: partidas || 0,
+          evento: eventos
+        })
+      }
     } catch (error) {
-      console.error('❌ Erro ao iniciar jogo:', error)
-      alert(`Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
-      setCreating(false)
+      console.error('Erro ao carregar stats:', error)
     }
   }
 
@@ -75,44 +89,58 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard">
-      <div className="p-4 lg:p-8 flex flex-col items-center justify-center min-h-screen">
-        {/* Welcome */}
-        <div className="text-center mb-12">
-          <div className="text-8xl mb-6">⚽</div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Bem-vindo, {user.name}!
-          </h1>
-          <p className="text-gray-600 text-lg mb-2">
-            Sistema de Futebol dos Irmãos
-          </p>
-          <p className="text-green-600 font-semibold">
-            "Juntos em campo, irmãos na fé"
-          </p>
+      <div className="p-4 lg:p-8">
+        {/* Evento Info */}
+        {stats.evento && (
+          <div className="mb-8 p-6 bg-white rounded-lg shadow">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Futebol de Domingo
+            </h2>
+            <p className="text-gray-600">
+              {new Date(stats.evento.event_date).toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
+            <p className="text-gray-500 text-sm mt-1">
+              Até às {stats.evento.expected_end_time || '22:00'}
+            </p>
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Jogadores Confirmados', value: stats.confirmados, icon: '👥' },
+            { label: 'Times Montados', value: stats.times, icon: '👕' },
+            { label: 'Partidas Jogadas', value: stats.partidas, icon: '⚽' },
+            { label: 'Horário de Encerramento', value: stats.evento?.expected_end_time || '22:00', icon: '🕐' }
+          ].map((stat, i) => (
+            <div key={i} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
+                  <p className="text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
+                </div>
+                <div className="text-4xl">{stat.icon}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Main Button */}
-        <button
-          onClick={handleStartGame}
-          disabled={creating}
-          className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-6 px-12 rounded-xl transition text-2xl disabled:opacity-50 mb-8 shadow-lg"
-        >
-          {creating ? '⏳ Iniciando Jogo...' : '🟢 INICIAR NOVO JOGO'}
-        </button>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
-          <div className="bg-blue-50 rounded-lg p-6 text-center border-2 border-blue-200">
-            <div className="text-4xl mb-2">👥</div>
-            <p className="text-gray-600 text-sm">Novo evento criado automaticamente</p>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-6 text-center border-2 border-purple-200">
-            <div className="text-4xl mb-2">👕</div>
-            <p className="text-gray-600 text-sm">Times montados automaticamente</p>
-          </div>
-          <div className="bg-green-50 rounded-lg p-6 text-center border-2 border-green-200">
-            <div className="text-4xl mb-2">🎮</div>
-            <p className="text-gray-600 text-sm">Vai direto para o jogo</p>
-          </div>
+        {/* Welcome Message */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow p-8 text-center">
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">
+            Bem-vindo, {user.name}! 👋
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Sistema de gestão de futebol dos irmãos da Igreja.
+          </p>
+          <p className="text-lg font-semibold text-green-600">
+            "Juntos em campo, irmãos na fé"
+          </p>
         </div>
       </div>
     </DashboardLayout>
