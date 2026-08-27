@@ -227,12 +227,12 @@ function LiveMatchPageContent() {
     )
   }
 
-  if (!event || !currentMatch || !queue || !currentMatch.team_a || !currentMatch.team_b) {
+  if (!currentMatch || !currentMatch.team_a || !currentMatch.team_b) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white text-lg mb-4">Erro ao carregar partida</p>
-          <a href="/events" className="text-blue-400 hover:text-blue-300">Voltar aos eventos</a>
+          <p className="text-white text-lg mb-4">Preparando partida...</p>
+          <div className="text-5xl mb-4">⚽</div>
         </div>
       </div>
     )
