@@ -220,8 +220,14 @@ function LiveMatchPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="text-5xl mb-4">⚽</div>
-          <p className="text-white text-lg">Carregando partida...</p>
+          <div className="text-7xl mb-6 animate-bounce">⚽</div>
+          <p className="text-white text-lg mb-2">Preparando partida...</p>
+          <div className="flex justify-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+          <p className="text-gray-400 text-sm mt-6">Abra o console (F12) para ver o progresso</p>
         </div>
       </div>
     )
