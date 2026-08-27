@@ -39,46 +39,69 @@ function LiveMatchPageContent() {
     setLoading(true)
     try {
       const eventId = parseInt(eventIdParam || '0')
+      if (!eventId) throw new Error('ID do evento não fornecido')
 
       // Obter evento
-      const eventData = await getEvent(eventId)
-      setEvent(eventData)
+      let eventData
+      try {
+        eventData = await getEvent(eventId)
+        setEvent(eventData)
+      } catch (err) {
+        console.error('Erro ao obter evento:', err)
+        throw new Error('Evento não encontrado')
+      }
 
       // Obter partida atual ou criar nova
       let match = await getCurrentMatch(eventId)
 
       if (!match) {
-        // Inicializar fila se necessário
-        const teams = await getEventTeams(eventId)
-        await initializeQueue(eventId, teams)
+        try {
+          // Inicializar fila se necessário
+          const teams = await getEventTeams(eventId)
+          if (teams.length === 0) {
+            throw new Error('Nenhum time criado para este evento')
+          }
 
-        // Criar primeira partida
-        const queueData = await getQueueSummary(eventId)
-        if (queueData.playing.length >= 2) {
-          match = await createMatch(
-            eventId,
-            queueData.playing[0].id,
-            queueData.playing[1].id,
-            1,
-            eventData.match_duration_minutes
-          )
+          await initializeQueue(eventId, teams)
+
+          // Criar primeira partida
+          const queueData = await getQueueSummary(eventId)
+          if (queueData.playing.length >= 2) {
+            match = await createMatch(
+              eventId,
+              queueData.playing[0].id,
+              queueData.playing[1].id,
+              1,
+              eventData.match_duration_minutes || 7
+            )
+          }
+        } catch (err) {
+          console.error('Erro ao criar primeira partida:', err)
         }
       }
 
       // Buscar times da partida
       if (match) {
-        const allTeams = await getEventTeams(eventId)
-        const teamA = allTeams.find(t => t.id === match.team_a_id)
-        const teamB = allTeams.find(t => t.id === match.team_b_id)
-        match.team_a = teamA
-        match.team_b = teamB
+        try {
+          const allTeams = await getEventTeams(eventId)
+          const teamA = allTeams.find(t => t.id === match.team_a_id)
+          const teamB = allTeams.find(t => t.id === match.team_b_id)
+          match.team_a = teamA
+          match.team_b = teamB
+        } catch (err) {
+          console.error('Erro ao buscar times:', err)
+        }
       }
 
       setCurrentMatch(match)
 
       // Obter fila
-      const queueData = await getQueueSummary(eventId)
-      setQueue(queueData)
+      try {
+        const queueData = await getQueueSummary(eventId)
+        setQueue(queueData)
+      } catch (err) {
+        console.error('Erro ao obter fila:', err)
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
