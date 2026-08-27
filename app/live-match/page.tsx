@@ -83,8 +83,9 @@ function LiveMatchPageContent() {
         console.log('[LIVE-MATCH] Times da partida:', teamA?.name, 'vs', teamB?.name)
       }
 
-      console.log('[LIVE-MATCH] Definindo match atual...')
+      console.log('[LIVE-MATCH] Definindo match atual...', match)
       setCurrentMatch(match)
+      console.log('[LIVE-MATCH] Match definido:', match?.id)
 
       // Obter fila
       console.log('[LIVE-MATCH] Obtendo fila...')
