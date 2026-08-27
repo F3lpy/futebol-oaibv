@@ -27,8 +27,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
     { label: 'Presença', href: '/attendance', icon: '✅' },
     { label: 'Times', href: '/teams', icon: '👕' },
     { label: 'Jogo ao Vivo', href: '/live-match', icon: '🟢' },
-    { label: 'Histórico', href: '/history', icon: '📈' },
-    { label: 'Configurações', href: '/settings', icon: '⚙️' }
+    { label: 'Eventos', href: '/events', icon: '📅' }
   ]
 
   return (

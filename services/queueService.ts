@@ -13,18 +13,34 @@ export async function getEventQueue(eventId: number) {
 }
 
 export async function initializeQueue(eventId: number, teams: Team[]) {
-  const queueRecords = teams.map((team, index) => ({
-    event_id: eventId,
-    team_id: team.id,
-    queue_position: index + 1,
-    status: index === 0 ? 'playing' : index === 1 ? 'next' : 'waiting'
-  }))
+  try {
+    // Verificar se já há fila para este evento
+    const { data: existingQueue } = await supabase
+      .from('event_team_queue')
+      .select('id')
+      .eq('event_id', eventId)
+      .limit(1)
 
-  const { error } = await supabase
-    .from('event_team_queue')
-    .insert(queueRecords)
+    // Se já existe, não fazer nada
+    if (existingQueue && existingQueue.length > 0) {
+      return
+    }
 
-  if (error && !error.message.includes('duplicate')) throw error
+    const queueRecords = teams.map((team, index) => ({
+      event_id: eventId,
+      team_id: team.id,
+      queue_position: index + 1,
+      status: index === 0 ? 'playing' : index === 1 ? 'next' : 'waiting'
+    }))
+
+    const { error } = await supabase
+      .from('event_team_queue')
+      .insert(queueRecords)
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Erro ao inicializar fila:', error)
+  }
 }
 
 export async function rotateQueue(eventId: number, winnerTeamId?: number) {
