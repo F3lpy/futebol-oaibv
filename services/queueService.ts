@@ -25,7 +25,7 @@ export async function initializeQueue(eventId: number, teams: Team[]) {
       event_id: eventId,
       team_id: team.id,
       queue_position: index + 1,
-      status: index === 0 ? 'playing' : index === 1 ? 'next' : 'waiting'
+      status: index < 2 ? 'playing' : index === 2 ? 'next' : 'waiting'
     }))
 
     const { error } = await supabase
