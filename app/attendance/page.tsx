@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,7 +20,7 @@ interface AttendanceRecord {
   players: Player
 }
 
-export default function AttendancePage() {
+function AttendancePageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -223,5 +224,13 @@ export default function AttendancePage() {
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-600">Carregando...</p></div>}>
+      <AttendancePageContent />
+    </Suspense>
   )
 }
