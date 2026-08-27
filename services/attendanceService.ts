@@ -28,12 +28,12 @@ export async function getAttendanceWithPlayers(eventId: number) {
 export async function confirmAttendance(eventId: number, playerId: number) {
   const { data, error } = await supabase
     .from('attendance')
-    .upsert({
-      event_id: eventId,
-      player_id: playerId,
+    .update({
       confirmed: true,
       confirmed_at: new Date().toISOString()
     })
+    .eq('event_id', eventId)
+    .eq('player_id', playerId)
     .select()
 
   if (error) throw error
@@ -43,12 +43,12 @@ export async function confirmAttendance(eventId: number, playerId: number) {
 export async function removeAttendance(eventId: number, playerId: number) {
   const { data, error } = await supabase
     .from('attendance')
-    .upsert({
-      event_id: eventId,
-      player_id: playerId,
+    .update({
       confirmed: false,
       confirmed_at: null
     })
+    .eq('event_id', eventId)
+    .eq('player_id', playerId)
     .select()
 
   if (error) throw error
