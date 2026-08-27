@@ -23,11 +23,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
 
   const menuItems = [
     { label: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { label: 'Jogadores', href: '/players', icon: '👥' },
-    { label: 'Presença', href: '/attendance', icon: '✅' },
-    { label: 'Times', href: '/teams', icon: '👕' },
-    { label: 'Jogo ao Vivo', href: '/live-match', icon: '🟢' },
-    { label: 'Eventos', href: '/events', icon: '📅' }
+    { label: 'Jogadores', href: '/players', icon: '👥' }
   ]
 
   return (
