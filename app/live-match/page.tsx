@@ -8,7 +8,7 @@ import { getEvent } from '@/services/eventService'
 import { getEventMatches, getCurrentMatch, createMatch, startMatch, pauseMatch, resumeMatch, addGoal, removeGoal, finishMatch, updateElapsedSeconds } from '@/services/matchService'
 import { getQueueSummary, initializeQueue, rotateQueue } from '@/services/queueService'
 import { getEventTeams } from '@/services/teamService'
-import { FootballEvent, Match } from '@/types'
+import { FootballEvent, MatchWithTeams } from '@/types'
 import { GAME_CONFIG } from '@/lib/constants'
 
 export default function LiveMatchPage() {
@@ -18,7 +18,7 @@ export default function LiveMatchPage() {
   const eventIdParam = searchParams.get('event')
 
   const [event, setEvent] = useState<FootballEvent | null>(null)
-  const [currentMatch, setCurrentMatch] = useState<Match | null>(null)
+  const [currentMatch, setCurrentMatch] = useState<MatchWithTeams | null>(null)
   const [queue, setQueue] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showResult, setShowResult] = useState(false)

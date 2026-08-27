@@ -91,6 +91,11 @@ export interface Match {
   created_at: string
 }
 
+export interface MatchWithTeams extends Match {
+  team_a?: Team
+  team_b?: Team
+}
+
 // Match Event (Goal, pause, etc)
 export type MatchEventType = 'goal' | 'goal_removed' | 'pause' | 'resume'
 
