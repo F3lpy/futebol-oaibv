@@ -160,12 +160,9 @@ export default function EventCard({ event, stats, onUpdate }: EventCardProps) {
           )}
 
           {event.status === 'finished' && (
-            <Link
-              href={`/history?event=${event.id}`}
-              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition text-center"
-            >
-              📊 Ver Histórico
-            </Link>
+            <div className="flex-1 bg-gray-100 text-gray-600 font-bold py-2 px-4 rounded-lg text-center">
+              ✅ Evento Encerrado
+            </div>
           )}
 
           {event.status === 'planned' && (
