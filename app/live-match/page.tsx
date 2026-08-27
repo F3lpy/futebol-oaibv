@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MatchTimer from '@/components/match/MatchTimer'
@@ -11,7 +11,7 @@ import { getEventTeams } from '@/services/teamService'
 import { FootballEvent, MatchWithTeams } from '@/types'
 import { GAME_CONFIG } from '@/lib/constants'
 
-export default function LiveMatchPage() {
+function LiveMatchPageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -430,5 +430,13 @@ export default function LiveMatchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function LiveMatchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-900 flex items-center justify-center"><p className="text-white">Carregando...</p></div>}>
+      <LiveMatchPageContent />
+    </Suspense>
   )
 }

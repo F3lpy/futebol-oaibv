@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/layouts/DashboardLayout'
@@ -17,7 +17,7 @@ interface EventWithStats extends FootballEvent {
   }
 }
 
-export default function EventsPage() {
+function EventsPageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [events, setEvents] = useState<EventWithStats[]>([])
@@ -198,5 +198,13 @@ export default function EventsPage() {
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-600">Carregando...</p></div>}>
+      <EventsPageContent />
+    </Suspense>
   )
 }
