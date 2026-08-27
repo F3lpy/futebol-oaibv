@@ -14,18 +14,13 @@ export async function getEventQueue(eventId: number) {
 
 export async function initializeQueue(eventId: number, teams: Team[]) {
   try {
-    // Verificar se já há fila para este evento
-    const { data: existingQueue } = await supabase
+    // Deletar fila existente para recomeçar do zero
+    await supabase
       .from('event_team_queue')
-      .select('id')
+      .delete()
       .eq('event_id', eventId)
-      .limit(1)
 
-    // Se já existe, não fazer nada
-    if (existingQueue && existingQueue.length > 0) {
-      return
-    }
-
+    // Criar fila do zero
     const queueRecords = teams.map((team, index) => ({
       event_id: eventId,
       team_id: team.id,
