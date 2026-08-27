@@ -4,7 +4,7 @@ import { EventTeamQueue, Team } from '@/types'
 export async function getEventQueue(eventId: number) {
   const { data, error } = await supabase
     .from('event_team_queue')
-    .select('*, teams(*)')
+    .select('*')
     .eq('event_id', eventId)
     .order('queue_position', { ascending: true })
 
@@ -171,9 +171,27 @@ export async function rotateQueue(eventId: number, winnerTeamId?: number) {
 export async function getQueueSummary(eventId: number) {
   const queue = await getEventQueue(eventId)
 
+  // Buscar todos os times do evento
+  const { data: teams, error: teamsError } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('event_id', eventId)
+
+  if (teamsError) throw teamsError
+
+  const teamsMap = new Map(teams.map(t => [t.id, t]))
+
   return {
-    playing: queue.filter(q => q.status === 'playing').map(q => q.teams),
-    next: queue.filter(q => q.status === 'next').map(q => q.teams)[0] || null,
-    waiting: queue.filter(q => q.status === 'waiting').map(q => q.teams)
+    playing: queue
+      .filter(q => q.status === 'playing')
+      .map(q => teamsMap.get(q.team_id))
+      .filter(Boolean),
+    next: queue
+      .filter(q => q.status === 'next')
+      .map(q => teamsMap.get(q.team_id))[0] || null,
+    waiting: queue
+      .filter(q => q.status === 'waiting')
+      .map(q => teamsMap.get(q.team_id))
+      .filter(Boolean)
   }
 }
