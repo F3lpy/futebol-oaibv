@@ -61,8 +61,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+
+      // Esperar o perfil ser carregado
+      if (data.user) {
+        await new Promise(resolve => setTimeout(resolve, 500)) // aguardar 500ms
+        await fetchUserProfile(data.user.id)
+      }
     } catch (error) {
       throw error
     }
