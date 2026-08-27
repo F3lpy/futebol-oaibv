@@ -5,7 +5,7 @@ import { GAME_CONFIG } from '@/lib/constants'
 export async function getEventMatches(eventId: number) {
   const { data, error } = await supabase
     .from('matches')
-    .select('*, team_a:teams!team_a_id(*), team_b:teams!team_b_id(*)')
+    .select('*')
     .eq('event_id', eventId)
     .order('sequence_number', { ascending: true })
 
@@ -16,7 +16,7 @@ export async function getEventMatches(eventId: number) {
 export async function getCurrentMatch(eventId: number) {
   const { data, error } = await supabase
     .from('matches')
-    .select('*, team_a:teams!team_a_id(*), team_b:teams!team_b_id(*)')
+    .select('*')
     .eq('event_id', eventId)
     .eq('status', 'live')
     .single()

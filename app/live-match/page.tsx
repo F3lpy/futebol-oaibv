@@ -65,6 +65,15 @@ function LiveMatchPageContent() {
         }
       }
 
+      // Buscar times da partida
+      if (match) {
+        const allTeams = await getEventTeams(eventId)
+        const teamA = allTeams.find(t => t.id === match.team_a_id)
+        const teamB = allTeams.find(t => t.id === match.team_b_id)
+        match.team_a = teamA
+        match.team_b = teamB
+      }
+
       setCurrentMatch(match)
 
       // Obter fila
