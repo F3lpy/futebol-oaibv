@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MatchTimer from '@/components/match/MatchTimer'
@@ -30,12 +30,13 @@ function LiveMatchPageContent() {
   }, [user, authLoading, router])
 
   useEffect(() => {
+    console.log('[LIVE-MATCH] useEffect acionado. user:', !!user, 'eventIdParam:', eventIdParam)
     if (user && eventIdParam) {
       loadData()
     }
-  }, [user, eventIdParam])
+  }, [user, eventIdParam, loadData])
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const eventId = parseInt(eventIdParam || '0')
@@ -102,9 +103,10 @@ function LiveMatchPageContent() {
     } catch (error) {
       console.error('[LIVE-MATCH] ❌ Erro:', error)
     } finally {
+      console.log('[LIVE-MATCH] setLoading(false) chamado')
       setLoading(false)
     }
-  }
+  }, [eventIdParam])
 
   async function handleStartMatch() {
     if (!currentMatch) return
