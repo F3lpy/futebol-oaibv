@@ -241,7 +241,6 @@ function LiveMatchPageContent() {
       await rotateQueue(parseInt(eventIdParam || '0'), undefined, teamId)
 
       setShowDrawModal(false)
-      setDrawResult(null)
       setShowResult(false)
       loadData()
     } catch (error) {
