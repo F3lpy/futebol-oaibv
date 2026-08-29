@@ -38,7 +38,7 @@ export async function initializeQueue(eventId: number, teams: Team[]) {
   }
 }
 
-export async function rotateQueue(eventId: number, winnerTeamId?: number) {
+export async function rotateQueue(eventId: number, winnerTeamId?: number, drawWinnerTeamId?: number) {
   // Obter fila atual
   const queue = await getEventQueue(eventId)
 
@@ -100,8 +100,60 @@ export async function rotateQueue(eventId: number, winnerTeamId?: number) {
         })
       }
     }
+  } else if (drawWinnerTeamId) {
+    // Empate com Par/Ímpar: vencedor do par/ímpar vai como NEXT, perdedor como WAITING
+    const drawWinner = playing.find(q => q.team_id === drawWinnerTeamId)
+    const drawLoser = playing.find(q => q.team_id !== drawWinnerTeamId)
+
+    if (!drawWinner || !drawLoser) throw new Error('Time não encontrado')
+
+    // Os próximos dois entram em campo
+    const newPlayingTeams = [
+      next[0],
+      next.length > 1 ? next[1] : waiting[0]
+    ]
+
+    updates.push({
+      id: newPlayingTeams[0].id,
+      status: 'playing',
+      queue_position: 1
+    })
+
+    if (newPlayingTeams[1]) {
+      updates.push({
+        id: newPlayingTeams[1].id,
+        status: 'playing',
+        queue_position: 2
+      })
+    }
+
+    // Vencedor do par/ímpar vai como NEXT
+    updates.push({
+      id: drawWinner.id,
+      status: 'next',
+      queue_position: 3
+    })
+
+    // Perdedor do par/ímpar vai como WAITING
+    updates.push({
+      id: drawLoser.id,
+      status: 'waiting',
+      queue_position: 4
+    })
+
+    // Reorganizar restantes
+    const startIdx = next.length > 1 ? 2 : 1
+    const remaining = [...next.slice(startIdx), ...waiting.slice(next.length > 1 ? 1 : 0)]
+
+    remaining.forEach((item, index) => {
+      updates.push({
+        id: item.id,
+        status: 'waiting',
+        queue_position: 5 + index
+      })
+    })
   } else {
-    // Empate: os dois saem, os próximos dois entram
+    // Empate sem desempate (fallback - não deve acontecer se implementado corretamente)
     if (next.length < 2 && waiting.length === 0) {
       throw new Error('Não há times suficientes para substituir')
     }

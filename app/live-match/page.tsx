@@ -23,6 +23,9 @@ function LiveMatchPageContent() {
   const [loading, setLoading] = useState(true)
   const [showResult, setShowResult] = useState(false)
   const [goalAnimation, setGoalAnimation] = useState<string | null>(null)
+  const [showDrawModal, setShowDrawModal] = useState(false)
+  const [drawInProgress, setDrawInProgress] = useState(false)
+  const [drawResult, setDrawResult] = useState<any>(null)
 
   const loadData = useCallback(async () => {
     console.log('[LIVE-MATCH] loadData iniciado')
@@ -203,10 +206,58 @@ function LiveMatchPageContent() {
           : undefined
 
       await finishMatch(currentMatch.id, 'time')
-      setShowResult(true)
+
+      // Se empate, mostrar modal de par/ímpar ao invés de resultado
+      if (!winnerId) {
+        setShowDrawModal(true)
+      } else {
+        setShowResult(true)
+      }
+
       loadData()
     } catch (error) {
       console.error('Erro ao encerrar por tempo:', error)
+    }
+  }
+
+  async function handlePlayDrawGame(userChoice: 'odd' | 'even') {
+    if (!currentMatch || drawInProgress) return
+
+    setDrawInProgress(true)
+
+    try {
+      // Sortear um número de 1-100
+      const randomNumber = Math.floor(Math.random() * 100) + 1
+      const computerChoice = randomNumber % 2 === 0 ? 'even' : 'odd'
+      const userWon = userChoice === computerChoice
+
+      // Determinar qual time ganhou
+      const drawWinner = userWon ? currentMatch.team_a_id : currentMatch.team_b_id
+
+      setDrawResult({
+        userChoice,
+        computerChoice,
+        randomNumber,
+        userWon,
+        teamAWon: userWon,
+        teamA: currentMatch.team_a,
+        teamB: currentMatch.team_b
+      })
+
+      // Aguardar um pouco para mostrar o resultado
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Chamar rotateQueue com o time vencedor do par/ímpar
+      await rotateQueue(parseInt(eventIdParam || '0'), undefined, drawWinner)
+
+      setShowDrawModal(false)
+      setDrawResult(null)
+      setShowResult(false)
+      loadData()
+    } catch (error) {
+      console.error('Erro ao fazer sorteio:', error)
+    } finally {
+      setDrawInProgress(false)
     }
   }
 
@@ -457,6 +508,115 @@ function LiveMatchPageContent() {
             <strong>✓ Limite: 2 gols encerrão automaticamente</strong>
           </p>
         </div>
+
+        {/* Modal de Par/Ímpar (Empate) */}
+        {showDrawModal && currentMatch && !drawResult && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 max-w-md w-full text-center">
+              <h2 className="text-3xl font-bold mb-4">EMPATE!</h2>
+              <p className="text-gray-300 mb-8">Vamos fazer PAR ou ÍMPAR</p>
+
+              <div className="mb-6 p-4 bg-gray-700 rounded-lg">
+                <p className="text-gray-400 text-sm mb-2">Times empatados:</p>
+                <div className="flex justify-around items-center">
+                  <div className="text-center">
+                    <div
+                      className="w-12 h-12 mx-auto rounded-lg mb-2 flex items-center justify-center"
+                      style={{ backgroundColor: currentMatch.team_a.color + '40', borderColor: currentMatch.team_a.color, borderWidth: '2px' }}
+                    >
+                      <span className="font-bold" style={{ color: currentMatch.team_a.color }}>
+                        {currentMatch.team_a.name[0]}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold">{currentMatch.team_a.name}</p>
+                  </div>
+                  <p className="text-yellow-400 font-bold">VS</p>
+                  <div className="text-center">
+                    <div
+                      className="w-12 h-12 mx-auto rounded-lg mb-2 flex items-center justify-center"
+                      style={{ backgroundColor: currentMatch.team_b.color + '40', borderColor: currentMatch.team_b.color, borderWidth: '2px' }}
+                    >
+                      <span className="font-bold" style={{ color: currentMatch.team_b.color }}>
+                        {currentMatch.team_b.name[0]}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold">{currentMatch.team_b.name}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => handlePlayDrawGame('odd')}
+                  disabled={drawInProgress}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                >
+                  🔵 ÍMPAR
+                </button>
+                <button
+                  onClick={() => handlePlayDrawGame('even')}
+                  disabled={drawInProgress}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                >
+                  🔴 PAR
+                </button>
+              </div>
+
+              <p className="text-gray-400 text-sm">
+                Quem ganhar vai para a PRÓXIMA partida.<br/>
+                Quem perder volta para o final da fila.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Resultado do Par/Ímpar */}
+        {showDrawModal && drawResult && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 max-w-md w-full text-center">
+              <h2 className="text-3xl font-bold mb-6">RESULTADO!</h2>
+
+              <div className="mb-6 p-4 bg-gray-700 rounded-lg">
+                <p className="text-gray-300 mb-4">Número sorteado:</p>
+                <p className="text-6xl font-black text-yellow-400 mb-4">{drawResult.randomNumber}</p>
+                <p className="text-2xl font-bold">
+                  {drawResult.randomNumber % 2 === 0 ? '🔴 PAR' : '🔵 ÍMPAR'}
+                </p>
+              </div>
+
+              <div className="mb-6">
+                {drawResult.userWon ? (
+                  <>
+                    <p className="text-2xl font-bold text-green-400 mb-2">
+                      {drawResult.teamA.name} VENCEU!
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {drawResult.teamA.name} entra para a PRÓXIMA partida<br/>
+                      {drawResult.teamB.name} volta para a FILA
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-green-400 mb-2">
+                      {drawResult.teamB.name} VENCEU!
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {drawResult.teamB.name} entra para a PRÓXIMA partida<br/>
+                      {drawResult.teamA.name} volta para a FILA
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={handleNextMatch}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
+              >
+                ▶️ PRÓXIMA PARTIDA
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Modal de Resultado */}
         {showResult && currentMatch && (
